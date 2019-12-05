@@ -5,22 +5,62 @@ import geoplotlib
 from geoplotlib.utils import read_csv
 import plotly.graph_objects as go
 import numpy as np
-from bokeh.layouts import gridplot
-from bokeh.plotting import figure, show, output_file
-from bokeh.sampledata.stocks import AAPL, GOOG, IBM, MSFT
-from future import print_function
+import matplotlib.pyplot as plt
+#%matplotlib inline
+import matplotlib.pyplot as plt
+from scipy.io import wavfile
+from scipy.fftpack import fft,fftfreq
 
-from bokeh.document import Document
-from bokeh.embed import file_html
-from bokeh.layouts import gridplot
-from bokeh.models.glyphs import Circle
-from bokeh.models import (BasicTicker, ColumnDataSource, Grid, LinearAxis,
-                         DataRange1d, PanTool, Plot, WheelZoomTool)
-from bokeh.resources import INLINE
-from bokeh.sampledata.iris import flowers
-from bokeh.util.browser import view
+#audio signal processing 
+samplerate, data = wavfile.read("ImperialMarch60.wav")
+samplerate
+data.shape
+samples = data.shape[0]
+samples
+plt.plot(data[:200])
+datafft = fft(data)
+#Get the absolute value of real and complex component:
+fftabs = abs(datafft)
+freqs = fftfreq(samples,1/samplerate)
+plt.plot(freqs,fftabs)
+plt.xlim( [10, samplerate/2] )
+plt.xscale( 'log' )
+plt.grid( True )
+plt.xlabel( 'Frequency (Hz)' )
+plt.plot(freqs[:int(freqs.size/2)],fftabs[:int(freqs.size/2)])
+samplerate, data = wavfile.read("ImperialMarch60.wav")
+data.shape
+samples = data.shape[0]
+samples
+plt.plot(data[:4*samplerate]) #plot first 4 seconds
+data = data[:]
+data.shape
+plt.plot(data[:4*samplerate]) #plot first 4 seconds
+datafft = fft(data)
 
-data = read_csv('./data/flights.csv')
+fftabs = abs(datafft)
+freqs = fftfreq(samples,1/samplerate)
+plt.xlim( [10, samplerate/2] )
+plt.xscale( 'log' )
+plt.grid( True )
+plt.xlabel( 'Frequency (Hz)' )
+plt.plot(freqs[:int(freqs.size/2)],fftabs[:int(freqs.size/2)])
+
+
+#Scipy example of curve fitting noisy data
+np.random.seed(0)
+
+x = np.linspace(-1, 1, 2000)
+y = np.cos(x) + 0.3*np.random.rand(2000)
+p = np.polynomial.Chebyshev.fit(x, y, 90)
+
+t = np.linspace(-1, 1, 200)
+plt.plot(x, y, 'r.')
+plt.plot(t, p(t), 'k-', lw=3)
+plt.show()
+
+#geoplot example of mapping patterns according to flight paths
+data = read_csv('flights.csv')
 geoplotlib.graph(data,
                  src_lat='lat_departure',
                  src_lon='lon_departure',
@@ -31,7 +71,7 @@ geoplotlib.graph(data,
                  linewidth=2)
 geoplotlib.show()
 
-
+# 3D plotting and visualization of signals using numpy
 np.random.seed(1)
 
 N = 70
@@ -52,121 +92,3 @@ fig.update_layout(scene = dict(
 
 fig.show()
 
-
-def datetime(x):
-    return np.array(x, dtype=np.datetime64)
-
-p1 = figure(x_axis_type="datetime", title="Stock Closing Prices")
-p1.grid.grid_line_alpha=0.3
-p1.xaxis.axis_label = 'Date'
-p1.yaxis.axis_label = 'Price'
-
-p1.line(datetime(AAPL['date']), AAPL['adj_close'], color='#A6CEE3', legend_label='AAPL')
-p1.line(datetime(GOOG['date']), GOOG['adj_close'], color='#B2DF8A', legend_label='GOOG')
-p1.line(datetime(IBM['date']), IBM['adj_close'], color='#33A02C', legend_label='IBM')
-p1.line(datetime(MSFT['date']), MSFT['adj_close'], color='#FB9A99', legend_label='MSFT')
-p1.legend.location = "top_left"
-
-aapl = np.array(AAPL['adj_close'])
-aapl_dates = np.array(AAPL['date'], dtype=np.datetime64)
-
-window_size = 30
-window = np.ones(window_size)/float(window_size)
-aapl_avg = np.convolve(aapl, window, 'same')
-
-p2 = figure(x_axis_type="datetime", title="AAPL One-Month Average")
-p2.grid.grid_line_alpha = 0
-p2.xaxis.axis_label = 'Date'
-p2.yaxis.axis_label = 'Price'
-p2.ygrid.band_fill_color = "olive"
-p2.ygrid.band_fill_alpha = 0.1
-
-p2.circle(aapl_dates, aapl, size=4, legend_label='close',
-          color='darkgrey', alpha=0.2)
-
-p2.line(aapl_dates, aapl_avg, legend_label='avg', color='navy')
-p2.legend.location = "top_left"
-
-output_file("stocks.html", title="stocks.py example")
-
-show(gridplot([[p1,p2]], plot_width=400, plot_height=400))  # open a browser
-
-
-colormap = {'setosa': 'red', 'versicolor': 'green', 'virginica': 'blue'}
-
-flowers['color'] = flowers['species'].map(lambda x: colormap[x])
-
-
-source = ColumnDataSource(
-    data=dict(
-        petal_length=flowers['petal_length'],
-        petal_width=flowers['petal_width'],
-        sepal_length=flowers['sepal_length'],
-        sepal_width=flowers['sepal_width'],
-        color=flowers['color']
-    )
-)
-
-xdr = DataRange1d(bounds=None)
-ydr = DataRange1d(bounds=None)
-
-def make_plot(xname, yname, xax=False, yax=False):
-    mbl = 40 if yax else 0
-    mbb = 40 if xax else 0
-    plot = Plot(
-        x_range=xdr, y_range=ydr, background_fill_color="#efe8e2",
-        border_fill_color='white', plot_width=200 + mbl, plot_height=200 + mbb,
-        min_border_left=2+mbl, min_border_right=2, min_border_top=2, min_border_bottom=2+mbb)
-
-    circle = Circle(x=xname, y=yname, fill_color="color", fill_alpha=0.2, size=4, line_color="color")
-    r = plot.add_glyph(source, circle)
-
-    xdr.renderers.append(r)
-    ydr.renderers.append(r)
-
-    xticker = BasicTicker()
-    if xax:
-        xaxis = LinearAxis()
-        xaxis.axis_label = xname
-        plot.add_layout(xaxis, 'below')
-        xticker = xaxis.ticker
-    plot.add_layout(Grid(dimension=0, ticker=xticker))
-
-    yticker = BasicTicker()
-    if yax:
-        yaxis = LinearAxis()
-        yaxis.axis_label = yname
-        yaxis.major_label_orientation = 'vertical'
-        plot.add_layout(yaxis, 'left')
-        yticker = yaxis.ticker
-    plot.add_layout(Grid(dimension=1, ticker=yticker))
-
-    plot.add_tools(PanTool(), WheelZoomTool())
-
-    return plot
-
-xattrs = ["petal_length", "petal_width", "sepal_width", "sepal_length"]
-yattrs = list(reversed(xattrs))
-plots = []
-
-for y in yattrs:
-    row = []
-    for x in xattrs:
-        xax = (y == yattrs[-1])
-        yax = (x == xattrs[0])
-        plot = make_plot(x, y, xax, yax)
-        row.append(plot)
-    plots.append(row)
-
-grid = gridplot(plots)
-
-doc = Document()
-doc.add_root(grid)
-
-if __name__ == "__main__":
-    doc.validate()
-    filename = "iris_splom.html"
-    with open(filename, "w") as f:
-        f.write(file_html(doc, INLINE, "Iris Data SPLOM"))
-    print("Wrote %s" % filename)
-    view(filename)
