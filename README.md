@@ -8,6 +8,8 @@ Python is easy to use and many available libraries to use for various data displ
 from plane paths to signal processing of audio signals. Many of which is shown in my sample code. 
 
 Output visualizations:
+
+
 ![alt text](https://github.com/vpazmany/DSPVis/blob/master/Figure_1.png)
 ![alt text](https://github.com/vpazmany/DSPVis/blob/master/Screen%20Shot%202019-12-15%20at%208.51.52%20PM.png)
 ![alt text](https://github.com/vpazmany/DSPVis/blob/master/Screen%20Shot%202019-12-15%20at%208.52.40%20PM.png)
